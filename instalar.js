@@ -17,7 +17,7 @@
   function mostrar(texto, boton, accion) {
     const el = document.createElement('div');
     el.className = 'cx-inst'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Instalar app');
-    el.innerHTML = `<img src="iconos/icono-192.png" alt=""><div><b>Instala Cafe Express</b><span></span></div>${boton ? '<button class="si"></button>' : ''}<button class="no" aria-label="Cerrar">×</button>`;
+    el.innerHTML = `<img src="iconos/icono-192.png" alt=""><div><b>Instala ${/puesto/.test(location.pathname) ? 'CE Puesto' : /dueno/.test(location.pathname) ? 'CE Dueño' : 'Cafe Express'}</b><span></span></div>${boton ? '<button class="si"></button>' : ''}<button class="no" aria-label="Cerrar">×</button>`;
     if (texto) el.querySelector('span').textContent = texto; else el.querySelector('span').remove();
     if (boton) { const b = el.querySelector('.si'); b.textContent = boton; b.onclick = () => { accion(); el.remove(); }; }
     el.querySelector('.no').onclick = () => { try { localStorage.setItem(clave, Date.now() + 7 * 864e5); } catch (e) { } el.remove(); document.body.style.paddingBottom = ''; };

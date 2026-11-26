@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cafe Express</title>
+<script>
+{
+  // Si alguien escribe mal la dirección (dueño, Dueno, puesto/, etc.) lo llevamos a la página correcta.
+  const ruta = decodeURIComponent(location.pathname).toLowerCase();
+  const i = location.pathname.toLowerCase().indexOf('/cafe-express/');
+  const raiz = i >= 0 ? location.pathname.slice(0, i + 14) : '/';
+  let destino = 'index.html';
+  if (/due(n|ñ)o/.test(ruta) || /reporte/.test(ruta)) destino = 'dueno.html';
+  else if (/puesto/.test(ruta)) destino = 'puesto.html';
+  location.replace(raiz + destino + location.search);
+}
+</script>
+</head>
+<body style="background:#2a1810;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:40px">
+<p>Abriendo Cafe Express…</p>
+<p><a href="./" style="color:#ffb27f">Si no abre, toca aquí</a></p>
+</body>
+</html>

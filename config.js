@@ -16,7 +16,8 @@ window.CX_CONFIG = {
     puestos: [
       { id: 1, nombre: 'Puesto 1', clave: '1111' },
       { id: 2, nombre: 'Puesto 2', clave: '2222' },
-      { id: 3, nombre: 'Puesto 3', clave: '3333' }
+      { id: 3, nombre: 'Puesto 3', clave: '3333' },
+      { id: 4, nombre: 'Puesto 4', clave: '4444' }
     ],
     claveDueno: 'dueno123'
   }

@@ -59,7 +59,8 @@ insert into ajustes(id, clave_dueno) values (1, 'CAMBIA-clave-dueno') on conflic
 insert into puestos(id, nombre, clave) values
   (1, 'Puesto 1', 'CAMBIA-clave-1'),
   (2, 'Puesto 2', 'CAMBIA-clave-2'),
-  (3, 'Puesto 3', 'CAMBIA-clave-3')
+  (3, 'Puesto 3', 'CAMBIA-clave-3'),
+  (4, 'Puesto 4', 'CAMBIA-clave-4')
 on conflict (id) do nothing;
 
 create or replace function dia_pa(t timestamptz) returns date

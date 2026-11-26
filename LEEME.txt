@@ -33,7 +33,8 @@ PASAR A LA VERSIÓN REAL
   7. El dueño abre https://usuario.github.io/cafe-express/dueno.html (lo puede guardar en inicio).
 
 REGLAS ANTITRAMPA (se cambian en la tabla ajustes)
-  - Cada QR vale 40 segundos; la pantalla lo cambia cada 20 s -> una foto vieja no sirve.
+  - Cada QR sirve para UNA sola persona: apenas lo escanean, la pantalla muestra otro.
+  - Si nadie lo escanea, cambia cada 20 s y vence a los 40 s -> una foto vieja no sirve.
   - Máximo 2 sellos por cliente al día, y 20 minutos entre un sello y otro.
   - La bebida gratis solo se canjea si el cliente escaneó el QR del puesto en los últimos 10 min.
   - El cupón de bebida gratis se mueve y tiene reloj: una captura de pantalla se nota.

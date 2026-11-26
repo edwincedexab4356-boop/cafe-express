@@ -112,6 +112,7 @@ begin
       select c.id, p_puesto, 'bloqueado' where exists(select 1 from puestos where id = p_puesto);
     return json_build_object('ok', false, 'sellos', c.sellos, 'msg', 'Este código ya venció. Escanea el QR que está ahora en la pantalla del puesto.');
   end if;
+  update codigos set vence = now() where codigo = p_codigo;
   update clientes set ultimo_scan = now(), ultimo_puesto = p_puesto where id = c.id;
   if c.sellos >= a.meta then
     return json_build_object('ok', true, 'sellos', c.sellos, 'msg', '¡Tienes tu bebida gratis! Toca «Canjear ahora».');
@@ -146,7 +147,8 @@ begin
     'hasta', now() + make_interval(secs => a.cupon_seg));
 end $$;
 
-create or replace function estado_puesto(p_puesto int, p_clave text) returns json
+drop function if exists estado_puesto(int, text);
+create or replace function estado_puesto(p_puesto int, p_clave text, p_codigo text default null) returns json
 language plpgsql security definer set search_path = public as $$
 declare p puestos;
 begin
@@ -154,6 +156,7 @@ begin
   if not found then raise exception 'Puesto o clave incorrecta'; end if;
   return json_build_object(
     'nombre', p.nombre,
+    'vigente', p_codigo is null or exists(select 1 from codigos where codigo = p_codigo and puesto = p.id and vence > now()),
     'recientes', (select coalesce(json_agg(z order by z.ts desc), '[]'::json) from (
         select split_part(c.nombre, ' ', 1) as nombre, m.tipo, c.sellos, m.ts
         from movimientos m join clientes c on c.id = m.cliente
@@ -201,5 +204,5 @@ end $$;
 -- Solo las funciones públicas quedan disponibles para la página
 revoke execute on function dia_pa(timestamptz) from public, anon;
 grant execute on function registrar(text,text,text), entrar(text,text), tarjeta(uuid,uuid),
-  escanear(uuid,uuid,int,text), canjear(uuid,uuid), estado_puesto(int,text), nuevo_qr(int,text),
+  escanear(uuid,uuid,int,text), canjear(uuid,uuid), estado_puesto(int,text,text), nuevo_qr(int,text),
   reporte(text,date) to anon;

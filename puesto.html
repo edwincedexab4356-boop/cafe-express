@@ -97,11 +97,20 @@ function pintar(r){
   document.getElementById('hoy').textContent=(r.nombre||'')+' · Hoy: '+r.hoy_sellos+' sellos · '+r.hoy_canjes+' bebidas gratis';
 }
 
+let revisando=false;
 setInterval(async()=>{
   if(!cfg||!document.getElementById('bar'))return;
   falta--;document.getElementById('bar').style.width=Math.max(0,falta/CFG.rotarSeg*100)+'%';
   if(falta<=0){nuevo();return}
-  if(falta%4===0){try{pintar(await rpc('estado_puesto',{p_puesto:cfg.p,p_clave:cfg.k}))}catch(e){}}
+  if(falta%2===0&&!revisando){
+    revisando=true;
+    try{
+      const r=await rpc('estado_puesto',{p_puesto:cfg.p,p_clave:cfg.k,p_codigo:cod});
+      pintar(r);
+      if(r.vigente===false){falta=CFG.rotarSeg;nuevo()}
+    }catch(e){}
+    revisando=false;
+  }
 },1000);
 
 async function despierto(){try{if('wakeLock' in navigator)lock=await navigator.wakeLock.request('screen')}catch(e){}}

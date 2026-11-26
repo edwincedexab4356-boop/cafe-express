@@ -3,7 +3,7 @@ CAFE EXPRESS - TARJETA DE SELLOS CON QR
 
 ARCHIVOS
   index.html     -> página del CLIENTE (la abre el QR): registro y tarjeta de sellos
-  puesto.html    -> PANTALLA DEL PUESTO: QR que cambia solo cada 30 s y avisos de sellos/canjes
+  puesto.html    -> PANTALLA DEL PUESTO: QR que cambia solo cada 20 s y avisos de sellos/canjes
   dueno.html     -> REPORTE DEL DUEÑO: sellos, bebidas gratis y alertas por puesto y por día
   config.js      -> ajustes (Supabase, meta de 10, tope de 2 sellos al día, etc.)
   api.js         -> conexión con Supabase (o modo demo si config.js no tiene datos)
@@ -33,7 +33,7 @@ PASAR A LA VERSIÓN REAL
   7. El dueño abre https://usuario.github.io/cafe-express/dueno.html (lo puede guardar en inicio).
 
 REGLAS ANTITRAMPA (se cambian en la tabla ajustes)
-  - Cada QR vale 3 minutos; la pantalla lo cambia cada 30 s -> una foto vieja no sirve.
+  - Cada QR vale 40 segundos; la pantalla lo cambia cada 20 s -> una foto vieja no sirve.
   - Máximo 2 sellos por cliente al día, y 20 minutos entre un sello y otro.
   - La bebida gratis solo se canjea si el cliente escaneó el QR del puesto en los últimos 10 min.
   - El cupón de bebida gratis se mueve y tiene reloj: una captura de pantalla se nota.

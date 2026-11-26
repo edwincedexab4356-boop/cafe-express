@@ -1,7 +1,7 @@
 // Service worker: permite instalar la app y que abra rápido.
 // Las páginas siempre se piden primero a internet (para tener la versión nueva);
 // si no hay señal, se usa la copia guardada. Supabase nunca se guarda en caché.
-const CACHE = 'cafe-express-v5';
+const CACHE = 'cafe-express-v6';
 const ARCHIVOS = ['./', './index.html', './puesto.html', './dueno.html', './estilos.css', './config.js', './api.js',
   './iconos/icono-192.png', './iconos/icono-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)).then(() => self.skipWaiting())); });

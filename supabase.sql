@@ -15,7 +15,7 @@ create table if not exists ajustes(
   meta int not null default 15,
   max_dia int not null default 1,
   espera_min int not null default 20,
-  vigencia_seg int not null default 180,
+  vigencia_seg int not null default 40,
   cupon_seg int not null default 120
 );
 

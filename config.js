@@ -7,8 +7,8 @@ window.CX_CONFIG = {
   meta: 15,          // sellos para la bebida gratis (debe coincidir con la tabla ajustes)
   maxDia: 1,         // sellos máximos por cliente al día
   esperaMin: 20,     // minutos mínimos entre un sello y otro
-  vigenciaSeg: 180,  // cuánto dura válido cada QR
-  rotarSeg: 30,      // cada cuánto cambia el QR en la pantalla del puesto
+  vigenciaSeg: 40,   // cuánto dura válido cada QR (segundos)
+  rotarSeg: 20,      // cada cuánto cambia el QR en la pantalla del puesto
   cuponSeg: 120,     // cuánto dura en pantalla el cupón de bebida gratis
 
   // Solo para MODO DEMO (en la versión real esto vive en la base de datos)

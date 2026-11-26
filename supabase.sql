@@ -70,7 +70,7 @@ create or replace function registrar(p_tel text, p_nombre text, p_pin text) retu
 language plpgsql security definer set search_path = public, extensions as $$
 declare c clientes; t text := regexp_replace(coalesce(p_tel,''), '\D', '', 'g');
 begin
-  if length(t) < 7 then raise exception 'Número de celular no válido'; end if;
+  if t !~ '^6[0-9]{7}$' then raise exception 'El celular debe tener 8 números y empezar con 6 (ej. 6123-4567).'; end if;
   if coalesce(p_pin,'') !~ '^\d{4}$' then raise exception 'El PIN debe tener 4 números'; end if;
   if exists(select 1 from clientes where telefono = t) then raise exception 'Ese número ya tiene tarjeta. Toca «Ya tengo tarjeta».'; end if;
   insert into clientes(telefono, nombre, pin)

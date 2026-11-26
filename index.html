@@ -40,15 +40,19 @@ function entrar(modo){
   <div class="tabs"><button id="t1" aria-pressed="${nuevo}">Soy nuevo</button><button id="t2" aria-pressed="${!nuevo}">Ya tengo tarjeta</button></div>
   <form id="f" style="display:flex;flex-direction:column;gap:12px">
   ${nuevo?'<label>Tu nombre<input id="n" autocomplete="given-name" required></label>':''}
-  <label>Celular<input id="t" inputmode="tel" autocomplete="tel" placeholder="6123-4567" required></label>
+  <label>Celular<input id="t" inputmode="numeric" autocomplete="tel" placeholder="6123-4567" maxlength="9" required></label>
   <label>${nuevo?'Crea un PIN de 4 números':'Tu PIN'}<input id="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
   <div class="msg bad" id="m"></div>
   <button id="go">${nuevo?'Crear mi tarjeta':'Entrar'}</button></form>
   ${nuevo?'<p class="tiny">El PIN es para entrar desde otro celular si cambias de teléfono.</p>':''}`;
+  const tel=document.getElementById('t');
+  tel.oninput=()=>{const d=tel.value.replace(/\D/g,'').slice(0,8);tel.value=d.length>4?d.slice(0,4)+'-'+d.slice(4):d};
   document.getElementById('t1').onclick=()=>entrar('nuevo');
   document.getElementById('t2').onclick=()=>entrar('login');
   document.getElementById('f').onsubmit=async e=>{
-    e.preventDefault();const b=document.getElementById('go'),m=document.getElementById('m');b.disabled=true;m.textContent='';
+    e.preventDefault();const b=document.getElementById('go'),m=document.getElementById('m');m.textContent='';
+    if(!/^6\d{7}$/.test(tel.value.replace(/\D/g,''))){m.textContent='El celular debe tener 8 números y empezar con 6 (ej. 6123-4567).';tel.focus();return}
+    b.disabled=true;
     try{
       const args={p_tel:document.getElementById('t').value,p_pin:document.getElementById('pin').value};
       const r=nuevo?await rpc('registrar',{...args,p_nombre:document.getElementById('n').value}):await rpc('entrar',args);

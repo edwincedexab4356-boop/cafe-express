@@ -18,7 +18,7 @@
     const el = document.createElement('div');
     el.className = 'cx-inst'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Instalar app');
     el.innerHTML = `<img src="iconos/icono-192.png" alt=""><div><b>Instala Cafe Express</b><span></span></div>${boton ? '<button class="si"></button>' : ''}<button class="no" aria-label="Cerrar">×</button>`;
-    el.querySelector('span').textContent = texto;
+    if (texto) el.querySelector('span').textContent = texto; else el.querySelector('span').remove();
     if (boton) { const b = el.querySelector('.si'); b.textContent = boton; b.onclick = () => { accion(); el.remove(); }; }
     el.querySelector('.no').onclick = () => { try { localStorage.setItem(clave, Date.now() + 7 * 864e5); } catch (e) { } el.remove(); document.body.style.paddingBottom = ''; };
     document.body.appendChild(el); document.body.style.paddingBottom = '96px';
@@ -27,7 +27,7 @@
   let evento = null;
   addEventListener('beforeinstallprompt', e => {
     e.preventDefault(); evento = e;
-    mostrar('Queda como app en tu celular, sin buscarla en el navegador.', 'Instalar', async () => { evento.prompt(); await evento.userChoice; evento = null; });
+    mostrar('', 'Instalar', async () => { evento.prompt(); await evento.userChoice; evento = null; });
   });
   addEventListener('appinstalled', () => document.querySelectorAll('.cx-inst').forEach(x => x.remove()));
 

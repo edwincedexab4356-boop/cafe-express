@@ -5,7 +5,7 @@ window.CX_CONFIG = {
 
   negocio: 'Cafe Express',
   meta: 15,          // sellos para la bebida gratis (debe coincidir con la tabla ajustes)
-  maxDia: 2,         // sellos máximos por cliente al día
+  maxDia: 1,         // sellos máximos por cliente al día
   esperaMin: 20,     // minutos mínimos entre un sello y otro
   vigenciaSeg: 180,  // cuánto dura válido cada QR
   rotarSeg: 30,      // cada cuánto cambia el QR en la pantalla del puesto

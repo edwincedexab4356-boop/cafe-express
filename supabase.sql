@@ -13,7 +13,7 @@ create table if not exists ajustes(
   id int primary key default 1 check (id = 1),
   clave_dueno text not null,
   meta int not null default 15,
-  max_dia int not null default 2,
+  max_dia int not null default 1,
   espera_min int not null default 20,
   vigencia_seg int not null default 180,
   cupon_seg int not null default 120
@@ -117,7 +117,7 @@ begin
     return json_build_object('ok', true, 'sellos', c.sellos, 'msg', '¡Tienes tu bebida gratis! Toca «Canjear ahora».');
   end if;
   if (select count(*) from movimientos where cliente = c.id and tipo = 'sello' and dia_pa(ts) = dia_pa(now())) >= a.max_dia then
-    return json_build_object('ok', false, 'sellos', c.sellos, 'msg', 'Ya sumaste ' || a.max_dia || ' sellos hoy. Mañana sigues acumulando.');
+    return json_build_object('ok', false, 'sellos', c.sellos, 'msg', case when a.max_dia = 1 then 'Ya sumaste tu sello de hoy. Vuelve mañana por el siguiente.' else 'Ya sumaste ' || a.max_dia || ' sellos hoy. Mañana sigues acumulando.' end);
   end if;
   if exists(select 1 from movimientos where cliente = c.id and tipo = 'sello' and ts > now() - make_interval(mins => a.espera_min)) then
     return json_build_object('ok', false, 'sellos', c.sellos, 'msg', 'Ya sumaste un sello hace poco. El próximo, en tu siguiente compra.');

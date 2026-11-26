@@ -3,7 +3,7 @@
   "name": "Cafe Express",
   "short_name": "Cafe Express",
   "description": "Tu tarjeta de sellos: cada 15 bebidas, una gratis.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

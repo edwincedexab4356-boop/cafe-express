@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2a1810">
+<link rel="manifest" href="app-dueno.webmanifest">
+<link rel="icon" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Reporte del dueño · Cafe Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+<style>.box{max-width:640px}</style>
+</head>
+<body>
+<header class="top"><div class="logo">Cafe <span>Express</span></div><span>Dueño</span></header>
+<div class="demo" id="demo" hidden>MODO DEMO: datos de este navegador</div>
+<main class="box" id="app"></main>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="instalar.js"></script>
+<script>
+{
+const {CFG,DEMO,rpc,esc,store,hoy}=CX;
+const app=document.getElementById('app');
+if(DEMO)document.getElementById('demo').hidden=false;
+let clave=store.get('cx_dueno'),texto='';
+
+function login(err){
+  app.innerHTML=`<h1>Reporte del día</h1><form id="f" style="display:flex;flex-direction:column;gap:12px">
+  <label>Clave del dueño<input id="k" type="password" autocomplete="current-password" required></label>
+  <div class="msg bad">${esc(err||'')}</div><button>Entrar</button></form>
+  ${DEMO?'<p class="tiny">Demo: la clave es dueno123.</p>':''}`;
+  document.getElementById('f').onsubmit=e=>{e.preventDefault();clave=document.getElementById('k').value;store.set('cx_dueno',clave);ver(hoy())};
+}
+
+async function ver(fecha){
+  if(!clave){login();return}
+  let r;
+  try{r=await rpc('reporte',{p_clave:clave,p_fecha:fecha})}
+  catch(x){if(/clave/i.test(x.message)){store.del('cx_dueno');clave=null;login(x.message)}else app.innerHTML=`<div class="msg bad">${esc(x.message)}</div>`;return}
+  const al=[];
+  r.puestos.forEach(p=>{if(p.canjes>=3)al.push(p.nombre+' entregó '+p.canjes+' bebidas gratis. Lo normal es 0 a 2 por día.')});
+  r.al_limite.forEach(c=>al.push(c.nombre+' ('+c.telefono+') sumó '+c.sellos+' sellos, el máximo del día.'));
+  if(r.bloqueados)al.push('Se bloquearon '+r.bloqueados+' intentos con un QR vencido (foto vieja o código reenviado).');
+  const T=r.puestos.reduce((a,p)=>({s:a.s+p.sellos,c:a.c+p.canjes,k:a.k+p.clientes}),{s:0,c:0,k:0});
+  const d=new Date(fecha+'T12:00').toLocaleDateString('es-PA',{weekday:'long',day:'numeric',month:'long'});
+  app.innerHTML=`<h1>Reporte del ${esc(d)}</h1>
+  <label>Ver otro día<input type="date" id="fe" value="${esc(fecha)}"></label>
+  <div class="card"><table><thead><tr><th>Puesto</th><th class="n">Clientes</th><th class="n">Sellos</th><th class="n">Gratis</th></tr></thead><tbody>
+  ${r.puestos.map(p=>`<tr><td>${esc(p.nombre)}</td><td class="n">${p.clientes}</td><td class="n">${p.sellos}</td><td class="n">${p.canjes}</td></tr>`).join('')}
+  <tr><td><b>Total</b></td><td class="n"><b>${T.k}</b></td><td class="n"><b>${T.s}</b></td><td class="n"><b>${T.c}</b></td></tr></tbody></table>
+  <p class="tiny" style="margin-top:10px">Clientes nuevos hoy: ${r.nuevos} · Clientes en total: ${r.total_clientes}</p></div>
+  <div class="card"><h2>Revisar</h2>${al.length?al.map(a=>`<p class="alert">• ${esc(a)}</p>`).join(''):'<p>Todo normal.</p>'}</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button id="cp" class="b2">Copiar</button><a class="btn" id="wa" target="_blank" rel="noopener">Enviar por WhatsApp</a></div>
+  <button class="b3" id="out">Salir</button>`;
+  texto=['*'+CFG.negocio+' · '+d+'*','',...r.puestos.map(p=>p.nombre+': '+p.clientes+' clientes, '+p.sellos+' sellos, '+p.canjes+' gratis'),'',
+    'Total: '+T.s+' sellos, '+T.c+' bebidas gratis','Clientes nuevos: '+r.nuevos,'','*Revisar:*',...(al.length?al.map(a=>'• '+a):['Todo normal.'])].join('\n');
+  document.getElementById('wa').href='https://wa.me/?text='+encodeURIComponent(texto);
+  document.getElementById('fe').onchange=e=>e.target.value&&ver(e.target.value);
+  document.getElementById('cp').onclick=async e=>{try{await navigator.clipboard.writeText(texto);e.target.textContent='Copiado'}catch(x){e.target.textContent='No se pudo'}};
+  document.getElementById('out').onclick=()=>{store.del('cx_dueno');clave=null;login()};
+}
+ver(hoy());
+}
+</script>
+</body>
+</html>

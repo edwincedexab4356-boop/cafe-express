@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2a1810">
+<link rel="manifest" href="app-puesto.webmanifest">
+<link rel="icon" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pantalla del puesto · Cafe Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+<style>
+body{background:var(--esp);color:#fff;min-height:100vh;min-height:100dvh}
+.pant{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px;text-align:center}
+.pant h1{font-size:clamp(28px,7vw,48px)}.pant h1 span{color:var(--acc)}
+.qrw{background:#fff;padding:16px;border-radius:24px;width:min(78vw,52vh,380px);aspect-ratio:1}
+.qrw>div,.qrw img,.qrw canvas{width:100%!important;height:100%!important;display:block}
+.barra{width:min(78vw,52vh,380px);height:8px;background:rgba(255,255,255,.2);border-radius:8px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--acc);width:100%;transition:width 1s linear}
+.feed{width:min(92vw,460px);display:flex;flex-direction:column;gap:8px;min-height:120px}
+.ev{border-radius:14px;padding:10px 14px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.1)}
+.ev.canje{background:var(--ok);font-size:22px}
+.pie{font-size:14px;color:#e2cdbb}
+.cfg{max-width:420px;margin:0 auto;padding:40px 20px;display:flex;flex-direction:column;gap:14px}
+.cfg input,.cfg select{background:#fff;color:#22140c}
+a.sim{color:#ffb27f;font-size:14px}
+</style>
+</head>
+<body>
+<div class="demo" id="demo" hidden>MODO DEMO</div>
+<div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="instalar.js"></script>
+<script>
+{
+const {CFG,DEMO,rpc,base,esc,store}=CX;
+let BASE=new URL('./',location.href).href;base().then(b=>BASE=b);
+const app=document.getElementById('app');
+if(DEMO)document.getElementById('demo').hidden=false;
+const q=new URLSearchParams(location.search);
+if(q.get('p')&&q.get('k')){store.set('cx_puesto',{p:+q.get('p'),k:q.get('k')});history.replaceState(null,'',location.pathname)}
+let cfg=store.get('cx_puesto'),cod=null,falta=0,lock=null;
+
+function config(err){
+  app.innerHTML=`<div class="cfg"><div class="logo">Cafe <span>Express</span></div><h1>Configurar este celular</h1>
+  <p>Se hace una sola vez. Después la pantalla queda mostrando el QR sola.</p>
+  <form id="f" style="display:flex;flex-direction:column;gap:12px">
+  <label>Número de puesto<input id="p" inputmode="numeric" required value="${cfg?cfg.p:''}"></label>
+  <label>Clave del puesto<input id="k" required></label>
+  <div class="msg bad">${esc(err||'')}</div><button>Empezar</button></form>
+  ${DEMO?'<p class="pie">Demo: puestos 1, 2 y 3 con claves 1111, 2222 y 3333.</p>':''}</div>`;
+  document.getElementById('f').onsubmit=e=>{e.preventDefault();cfg={p:+document.getElementById('p').value,k:document.getElementById('k').value};store.set('cx_puesto',cfg);pantalla()};
+}
+
+function pantalla(){
+  if(!cfg){config();return}
+  app.innerHTML=`<div class="pant"><h1>Escanea y suma tu <span>sello</span></h1>
+  <div class="qrw" id="qr"></div><div class="barra"><i id="bar"></i></div>
+  <div class="pie" id="pie">Abre la cámara de tu celular y apunta al código</div>
+  ${DEMO?'<div class="pie" id="dir"></div>':''}
+  ${DEMO?'<a class="sim" id="sim" target="_blank">Demo: abrir como cliente (simula el escaneo)</a>':''}
+  <div class="feed" id="feed" aria-live="polite"></div>
+  <div class="pie" id="hoy"></div></div>`;
+  nuevo();
+}
+
+function url(c){return BASE+'index.html?p='+cfg.p+'&c='+c}
+
+async function nuevo(){
+  try{
+    BASE=await base();
+    const r=await rpc('nuevo_qr',{p_puesto:cfg.p,p_clave:cfg.k});
+    cod=r.codigo;falta=CFG.rotarSeg;
+    const el=document.getElementById('qr');if(!el)return;el.innerHTML='';
+    if(window.QRCode)new QRCode(el,{text:url(cod),width:512,height:512,correctLevel:QRCode.CorrectLevel.M});
+    else el.textContent='No cargó el generador de QR. Revisa el internet.';
+    const s=document.getElementById('sim');if(s)s.href=url(cod);
+    const dr=document.getElementById('dir');if(dr)dr.textContent='El QR abre: '+BASE;
+    pintar(r);
+  }catch(x){
+    if(/clave/i.test(x.message)){store.del('cx_puesto');config(x.message);return}
+    const p=document.getElementById('pie');if(p)p.textContent='Sin conexión, reintentando…';falta=5;
+  }
+}
+
+function pintar(r){
+  const f=document.getElementById('feed');if(!f)return;
+  f.innerHTML=(r.recientes||[]).map(e=>e.tipo==='canje'
+    ?`<div class="ev canje"><span>BEBIDA GRATIS · ${esc(e.nombre)}</span><span>✓</span></div>`
+    :`<div class="ev"><span>${esc(e.nombre)} +1 sello</span><span>${esc(e.sellos)}/${CFG.meta}</span></div>`).join('');
+  document.getElementById('hoy').textContent=(r.nombre||'')+' · Hoy: '+r.hoy_sellos+' sellos · '+r.hoy_canjes+' bebidas gratis';
+}
+
+setInterval(async()=>{
+  if(!cfg||!document.getElementById('bar'))return;
+  falta--;document.getElementById('bar').style.width=Math.max(0,falta/CFG.rotarSeg*100)+'%';
+  if(falta<=0){nuevo();return}
+  if(falta%4===0){try{pintar(await rpc('estado_puesto',{p_puesto:cfg.p,p_clave:cfg.k}))}catch(e){}}
+},1000);
+
+async function despierto(){try{if('wakeLock' in navigator)lock=await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')despierto()});
+despierto();
+pantalla();
+}
+</script>
+</body>
+</html>

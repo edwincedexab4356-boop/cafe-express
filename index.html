@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2a1810">
+<link rel="manifest" href="app-cliente.webmanifest">
+<link rel="icon" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mi tarjeta · Cafe Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<header class="top"><div class="logo">Cafe <span>Express</span></div><span id="hola"></span></header>
+<div class="demo" id="demo" hidden>MODO DEMO: los datos solo se guardan en este navegador</div>
+<main class="box" id="app"></main>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="instalar.js"></script>
+<script>
+{
+const {CFG,DEMO,rpc,esc,store}=CX;
+const app=document.getElementById('app');
+if(DEMO)document.getElementById('demo').hidden=false;
+const q=new URLSearchParams(location.search);
+if(q.get('c')){store.set('cx_pend',{p:+q.get('p'),c:q.get('c')});history.replaceState(null,'',location.pathname)}
+let ses=store.get('cx_cli');
+
+const cup=f=>`<svg viewBox="0 0 40 46" aria-hidden="true"><path d="M8 10h24l-3 32H11z" fill="${f?'#ff6a1a':'none'}" stroke="${f?'#ff6a1a':'currentColor'}" stroke-width="2.5"/><rect x="5" y="5" width="30" height="6" rx="2" fill="${f?'#ff6a1a':'currentColor'}" opacity="${f?1:.5}"/>${f?'<path d="M14 22h12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>':''}</svg>`;
+
+function entrar(modo){
+  document.getElementById('hola').textContent='';
+  const nuevo=modo!=='login';
+  app.innerHTML=`<h1>${nuevo?'Tu tarjeta de sellos':'Entra a tu tarjeta'}</h1>
+  <p class="tiny">Cada ${CFG.meta} bebidas, la siguiente es gratis. Solo escaneas el QR del puesto cuando compras.</p>
+  <div class="tabs"><button id="t1" aria-pressed="${nuevo}">Soy nuevo</button><button id="t2" aria-pressed="${!nuevo}">Ya tengo tarjeta</button></div>
+  <form id="f" style="display:flex;flex-direction:column;gap:12px">
+  ${nuevo?'<label>Tu nombre<input id="n" autocomplete="given-name" required></label>':''}
+  <label>Celular<input id="t" inputmode="tel" autocomplete="tel" placeholder="6123-4567" required></label>
+  <label>${nuevo?'Crea un PIN de 4 números':'Tu PIN'}<input id="pin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+  <div class="msg bad" id="m"></div>
+  <button id="go">${nuevo?'Crear mi tarjeta':'Entrar'}</button></form>
+  ${nuevo?'<p class="tiny">El PIN es para entrar desde otro celular si cambias de teléfono.</p>':''}`;
+  document.getElementById('t1').onclick=()=>entrar('nuevo');
+  document.getElementById('t2').onclick=()=>entrar('login');
+  document.getElementById('f').onsubmit=async e=>{
+    e.preventDefault();const b=document.getElementById('go'),m=document.getElementById('m');b.disabled=true;m.textContent='';
+    try{
+      const args={p_tel:document.getElementById('t').value,p_pin:document.getElementById('pin').value};
+      const r=nuevo?await rpc('registrar',{...args,p_nombre:document.getElementById('n').value}):await rpc('entrar',args);
+      ses={id:r.id,token:r.token};store.set('cx_cli',ses);inicio();
+    }catch(x){m.textContent=x.message;b.disabled=false}
+  };
+}
+
+async function inicio(){
+  if(!ses){entrar('nuevo');return}
+  const cup0=store.get('cx_cupon');
+  if(cup0&&new Date(cup0.hasta)>Date.now()){cupon(cup0);return}
+  let msg=null;
+  const pend=store.get('cx_pend');store.del('cx_pend');
+  try{
+    if(pend)msg=await rpc('escanear',{p_id:ses.id,p_token:ses.token,p_puesto:pend.p,p_codigo:pend.c});
+    tarjeta(await rpc('tarjeta',{p_id:ses.id,p_token:ses.token}),msg);
+  }catch(x){
+    if(/sesi/i.test(x.message)){store.del('cx_cli');ses=null;entrar('login');return}
+    app.innerHTML=`<div class="msg bad">${esc(x.message)}</div><button id="re">Intentar de nuevo</button>`;
+    if(pend)store.set('cx_pend',pend);
+    document.getElementById('re').onclick=inicio;
+  }
+}
+
+function tarjeta(t,msg){
+  const f=Math.min(t.sellos,t.meta);
+  document.getElementById('hola').textContent='Hola, '+t.nombre.split(' ')[0];
+  app.innerHTML=`<div class="tarjeta"><div class="num">${f}/${t.meta}</div>
+  <p>${f>=t.meta?'¡Tienes una bebida gratis!':'Te faltan '+(t.meta-f)+' para tu bebida gratis.'}</p></div>
+  <div class="msg ${msg?(msg.ok?'ok':'bad'):''}" aria-live="polite">${msg?esc(msg.msg):''}</div>
+  <div class="cups">${Array.from({length:t.meta},(_,i)=>cup(i<f)).join('')}</div>
+  ${t.puede_canjear?'<button id="cj" class="b2">Canjear ahora</button><p class="tiny">Tócalo frente al trabajador: le vas a mostrar la pantalla.</p>':
+   f>=t.meta?'<p class="tiny">Para canjear, escanea el QR del puesto donde estás y luego toca «Canjear ahora».</p>':
+   '<p class="tiny">Cuando compres, abre la cámara y escanea el QR del puesto. El sello se suma solo.</p>'}
+  <p class="tiny">Guarda esta página en tu pantalla de inicio para tenerla a mano.</p>
+  <button class="b3" id="out">Salir de esta tarjeta</button>`;
+  const cj=document.getElementById('cj');
+  if(cj)cj.onclick=async()=>{cj.disabled=true;try{const r=await rpc('canjear',{p_id:ses.id,p_token:ses.token});store.set('cx_cupon',r);cupon(r)}catch(x){cj.disabled=false;tarjeta(t,{ok:false,msg:x.message})}};
+  document.getElementById('out').onclick=()=>{store.del('cx_cli');ses=null;entrar('login')};
+}
+
+function cupon(c){
+  app.innerHTML=`<div class="cupon"><div class="num">BEBIDA GRATIS</div><p>${esc(c.puesto)} · Muestra esta pantalla</p>
+  <div class="reloj" id="rl"></div><p id="hr"></p></div>
+  <p class="tiny">La pantalla se mueve y el reloj avanza: una foto o captura no sirve. El cupón se vence solo.</p>`;
+  const tick=()=>{
+    const s=Math.max(0,Math.ceil((new Date(c.hasta)-Date.now())/1000));
+    document.getElementById('rl').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+    document.getElementById('hr').textContent='Ahora: '+new Date().toLocaleTimeString('es-PA');
+    if(s<=0){clearInterval(iv);store.del('cx_cupon');inicio()}
+  };
+  const iv=setInterval(tick,1000);tick();
+}
+
+inicio();
+}
+</script>
+</body>
+</html>

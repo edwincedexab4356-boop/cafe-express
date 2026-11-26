@@ -24,6 +24,14 @@
     document.body.appendChild(el); document.body.style.paddingBottom = '96px';
   }
 
+  // En Android, la app del cliente se ofrece como APK descargable
+  const esCliente = !/puesto|dueno/.test(location.pathname);
+  const enApp = document.referrer.startsWith('android-app://');
+  if (esCliente && /android/i.test(navigator.userAgent)) {
+    if (!enApp) setTimeout(() => mostrar('Toca Descargar y luego abre el archivo para instalarla.', 'Descargar', () => { location.href = 'apk/CafeExpress.apk'; }), 1200);
+    return;
+  }
+
   let evento = null;
   addEventListener('beforeinstallprompt', e => {
     e.preventDefault(); evento = e;

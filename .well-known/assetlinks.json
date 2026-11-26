@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.cafeexpress.tarjeta",
+    "sha256_cert_fingerprints": ["3D:20:77:F6:70:FF:34:BF:C2:D6:26:74:4F:E0:08:09:15:7E:63:EE:3F:5A:8D:0C:4A:5B:1C:91:FF:8C:AD:2B"]
+  }
+}]
